@@ -1,10 +1,14 @@
 using VSCodeDevDaysDemo.Components;
+using VSCodeDevDaysDemo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register application services
+builder.Services.AddSingleton<ISongGeneratorService, SongGeneratorService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,237 @@
+@page "/song-generator/package"
+@using VSCodeDevDaysDemo.Models
+@using VSCodeDevDaysDemo.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject ISongGeneratorService SongGeneratorService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Crear Canción - Paso 5: Elige tu Paquete</PageTitle>
+
+<div class="container my-4">
+    <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Paso 5 de 5</div>
+    </div>
+
+    <h1 class="mb-4">Elige el Paquete que Mejor se Adapte a Ti</h1>
+    
+    <p class="lead mb-4">Selecciona el paquete que prefieras para tu canción personalizada.</p>
+
+    @if (songRequest == null)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p>Cargando información de tu solicitud...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <!-- Basic Package -->
+            <div class="col-md-4">
+                <div class="card h-100 @(selectedPackage == SongDeliveryPackage.Basic ? "border-primary" : "")" 
+                     @onclick="() => SelectPackage(SongDeliveryPackage.Basic)">
+                    <div class="card-header text-center @(selectedPackage == SongDeliveryPackage.Basic ? "bg-primary text-white" : "")">
+                        <h4 class="my-0">Básico</h4>
+                    </div>
+                    <div class="card-body">
+                        <h1 class="card-title pricing-card-title text-center">$199<small class="text-muted fw-light">.99</small></h1>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Canción personalizada (1-2 minutos)</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> 1 revisión de letra</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Entrega digital (MP3)</li>
+                            <li class="mb-2 text-muted"><i class="bi bi-x-circle text-danger me-2"></i> Letra imprimible</li>
+                            <li class="mb-2 text-muted"><i class="bi bi-x-circle text-danger me-2"></i> Certificado de originalidad</li>
+                            <li class="mb-2 text-muted"><i class="bi bi-x-circle text-danger me-2"></i> Formatos adicionales</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer border-0 bg-transparent">
+                        @if (selectedPackage == SongDeliveryPackage.Basic)
+                        {
+                            <button type="button" class="w-100 btn btn-primary" disabled>Seleccionado</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="w-100 btn btn-outline-primary" @onclick="() => SelectPackage(SongDeliveryPackage.Basic)">Seleccionar</button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Package -->
+            <div class="col-md-4">
+                <div class="card h-100 @(selectedPackage == SongDeliveryPackage.Premium ? "border-primary" : "")" 
+                     @onclick="() => SelectPackage(SongDeliveryPackage.Premium)">
+                    <div class="card-header text-center @(selectedPackage == SongDeliveryPackage.Premium ? "bg-primary text-white" : "")">
+                        <h4 class="my-0">Premium</h4>
+                        <span class="badge bg-warning">Recomendado</span>
+                    </div>
+                    <div class="card-body">
+                        <h1 class="card-title pricing-card-title text-center">$299<small class="text-muted fw-light">.99</small></h1>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Canción personalizada (2-3 minutos)</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> 2 revisiones de letra</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Entrega digital (MP3 y WAV)</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Letra imprimible</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Certificado de originalidad digital</li>
+                            <li class="mb-2 text-muted"><i class="bi bi-x-circle text-danger me-2"></i> CD físico personalizado</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer border-0 bg-transparent">
+                        @if (selectedPackage == SongDeliveryPackage.Premium)
+                        {
+                            <button type="button" class="w-100 btn btn-primary" disabled>Seleccionado</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="w-100 btn btn-outline-primary" @onclick="() => SelectPackage(SongDeliveryPackage.Premium)">Seleccionar</button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deluxe Package -->
+            <div class="col-md-4">
+                <div class="card h-100 @(selectedPackage == SongDeliveryPackage.Deluxe ? "border-primary" : "")" 
+                     @onclick="() => SelectPackage(SongDeliveryPackage.Deluxe)">
+                    <div class="card-header text-center @(selectedPackage == SongDeliveryPackage.Deluxe ? "bg-primary text-white" : "")">
+                        <h4 class="my-0">Deluxe</h4>
+                    </div>
+                    <div class="card-body">
+                        <h1 class="card-title pricing-card-title text-center">$499<small class="text-muted fw-light">.99</small></h1>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Canción personalizada (2-4 minutos)</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> 3 revisiones de letra</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Todos los formatos digitales</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Letra imprimible</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Certificado de originalidad impreso</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> CD físico con diseño personalizado</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Video lírico simple</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer border-0 bg-transparent">
+                        @if (selectedPackage == SongDeliveryPackage.Deluxe)
+                        {
+                            <button type="button" class="w-100 btn btn-primary" disabled>Seleccionado</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="w-100 btn btn-outline-primary" @onclick="() => SelectPackage(SongDeliveryPackage.Deluxe)">Seleccionar</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Servicios Adicionales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="" id="urgentDelivery">
+                            <label class="form-check-label d-flex justify-content-between" for="urgentDelivery">
+                                <span>Entrega urgente (24-48h)</span>
+                                <span class="fw-bold">$99.99</span>
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="" id="instrumentalVersion">
+                            <label class="form-check-label d-flex justify-content-between" for="instrumentalVersion">
+                                <span>Versión instrumental</span>
+                                <span class="fw-bold">$49.99</span>
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="" id="extendedDuration">
+                            <label class="form-check-label d-flex justify-content-between" for="extendedDuration">
+                                <span>Extensión de duración (+1 minuto)</span>
+                                <span class="fw-bold">$79.99</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-5">
+            <button class="btn btn-outline-secondary" @onclick="GoBack">
+                <i class="bi bi-arrow-left"></i> Atrás
+            </button>
+            <button class="btn btn-primary btn-lg @(selectedPackage == null ? "disabled" : "")" @onclick="CompleteRequest">
+                Finalizar Pedido <i class="bi bi-check-circle"></i>
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? RequestId { get; set; }
+
+    private SongRequest? songRequest;
+    private SongDeliveryPackage? selectedPackage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verify that we have a request ID, if not redirect back
+        if (RequestId == null)
+        {
+            NavigationManager.NavigateTo("/song-generator");
+            return;
+        }
+
+        try 
+        {
+            // Get the song request
+            songRequest = await SongGeneratorService.GetSongRequestByIdAsync(RequestId.Value);
+            selectedPackage = songRequest.Package; // Get the existing package selection if any
+            
+            // Set a default package if none is selected
+            if (selectedPackage == null)
+            {
+                selectedPackage = SongDeliveryPackage.Premium; // Default to Premium
+            }
+        }
+        catch
+        {
+            // If request not found, go back to the start
+            NavigationManager.NavigateTo("/song-generator");
+        }
+    }
+
+    private void SelectPackage(SongDeliveryPackage package)
+    {
+        selectedPackage = package;
+        if (songRequest != null)
+        {
+            songRequest.Package = package;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo($"/song-generator/details?occasion={songRequest?.Occasion}&genreId={songRequest?.GenreId}&tone={songRequest?.Tone}");
+    }
+
+    private async Task CompleteRequest()
+    {
+        if (songRequest != null && selectedPackage != null)
+        {
+            // Update the request with the selected package
+            songRequest.Package = selectedPackage.Value;
+            
+            // In a real app, we would process the payment here
+            
+            // Update the request in the database
+            await SongGeneratorService.UpdateSongRequestAsync(songRequest);
+            
+            // Navigate to the confirmation page
+            NavigationManager.NavigateTo($"/song-generator/confirmation?requestId={songRequest.Id}");
+        }
+    }
+}

@@ -1,0 +1,163 @@
+@page "/song-generator/tone"
+@using VSCodeDevDaysDemo.Models
+@using VSCodeDevDaysDemo.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject ISongGeneratorService SongGeneratorService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Crear Canción - Paso 3: Elige el Tono Emocional</PageTitle>
+
+<div class="container my-4">
+    <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">Paso 3 de 5</div>
+    </div>
+
+    <h1 class="mb-4">¿Qué tono emocional deseas para tu canción?</h1>
+    
+    <p class="lead mb-4">El tono emocional definirá cómo se sentirá la canción. Selecciona la emoción principal que deseas transmitir.</p>
+
+    <div class="row g-4">
+        @foreach (var tone in Enum.GetValues<SongTone>())
+        {
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 @(selectedTone == tone ? "border-primary" : "")" 
+                     @onclick="() => SelectTone(tone)"
+                     style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <i class="@GetToneIcon(tone) fs-1 mb-3 @GetToneColor(tone)"></i>
+                        <h4>@GetToneName(tone)</h4>
+                        <p class="text-muted">@GetToneDescription(tone)</p>
+                        @if (selectedTone == tone)
+                        {
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <i class="bi bi-check-circle-fill text-primary fs-4"></i>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Atrás
+        </button>
+        <button class="btn btn-primary @(selectedTone == null ? "disabled" : "")" @onclick="ContinueToNextStep">
+            Continuar <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public SongOccasion? Occasion { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? GenreId { get; set; }
+
+    private SongTone? selectedTone;
+    private Genre? selectedGenre;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verify that we have required parameters, if not redirect back
+        if (Occasion == null || GenreId == null)
+        {
+            NavigationManager.NavigateTo("/song-generator");
+            return;
+        }
+
+        try 
+        {
+            // Get the selected genre details
+            selectedGenre = await SongGeneratorService.GetGenreByIdAsync(GenreId.Value);
+        }
+        catch
+        {
+            // If genre not found, go back to genre selection
+            NavigationManager.NavigateTo($"/song-generator/genre?occasion={Occasion}");
+        }
+    }
+
+    private void SelectTone(SongTone tone)
+    {
+        selectedTone = tone;
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo($"/song-generator/genre?occasion={Occasion}");
+    }
+
+    private void ContinueToNextStep()
+    {
+        if (selectedTone != null && Occasion != null && GenreId != null)
+        {
+            // Navigate to the next step with all parameters
+            NavigationManager.NavigateTo($"/song-generator/details?occasion={Occasion}&genreId={GenreId}&tone={selectedTone}");
+        }
+    }
+
+    private string GetToneName(SongTone tone) => tone switch
+    {
+        SongTone.Romantic => "Romántico",
+        SongTone.Joyful => "Alegre",
+        SongTone.Nostalgic => "Nostálgico",
+        SongTone.Inspirational => "Inspirador",
+        SongTone.Humorous => "Humorístico",
+        SongTone.Emotional => "Emotivo",
+        SongTone.Energetic => "Enérgico",
+        SongTone.Reflective => "Reflexivo",
+        SongTone.Hopeful => "Esperanzador",
+        SongTone.Serious => "Serio",
+        _ => tone.ToString()
+    };
+
+    private string GetToneDescription(SongTone tone) => tone switch
+    {
+        SongTone.Romantic => "Expresa sentimientos de amor y afecto profundo.",
+        SongTone.Joyful => "Celebra la felicidad y momentos positivos.",
+        SongTone.Nostalgic => "Evoca recuerdos y momentos del pasado.",
+        SongTone.Inspirational => "Motiva, eleva el espíritu y anima.",
+        SongTone.Humorous => "Divertido y con toques de comedia.",
+        SongTone.Emotional => "Profunda conexión emocional e introspección.",
+        SongTone.Energetic => "Vibrante, lleno de vida y movimiento.",
+        SongTone.Reflective => "Contemplativo, pensativo y filosófico.",
+        SongTone.Hopeful => "Optimista y orientado hacia el futuro.",
+        SongTone.Serious => "Formal, solemne y respetuoso.",
+        _ => "Selecciona para continuar."
+    };
+
+    private string GetToneIcon(SongTone tone) => tone switch
+    {
+        SongTone.Romantic => "bi bi-heart",
+        SongTone.Joyful => "bi bi-emoji-smile",
+        SongTone.Nostalgic => "bi bi-hourglass-split",
+        SongTone.Inspirational => "bi bi-lightbulb",
+        SongTone.Humorous => "bi bi-emoji-laughing",
+        SongTone.Emotional => "bi bi-emoji-tear",
+        SongTone.Energetic => "bi bi-lightning",
+        SongTone.Reflective => "bi bi-moon-stars",
+        SongTone.Hopeful => "bi bi-sunrise",
+        SongTone.Serious => "bi bi-briefcase",
+        _ => "bi bi-question-circle"
+    };
+
+    private string GetToneColor(SongTone tone) => tone switch
+    {
+        SongTone.Romantic => "text-danger",
+        SongTone.Joyful => "text-warning",
+        SongTone.Nostalgic => "text-info",
+        SongTone.Inspirational => "text-success",
+        SongTone.Humorous => "text-orange",
+        SongTone.Emotional => "text-primary",
+        SongTone.Energetic => "text-danger",
+        SongTone.Reflective => "text-purple",
+        SongTone.Hopeful => "text-success",
+        SongTone.Serious => "text-secondary",
+        _ => "text-muted"
+    };
+}

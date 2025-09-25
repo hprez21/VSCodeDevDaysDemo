@@ -1,0 +1,205 @@
+@page "/song-gallery"
+@using VSCodeDevDaysDemo.Models
+@using VSCodeDevDaysDemo.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject ISongGeneratorService SongGeneratorService
+
+<PageTitle>Galería de Ejemplos - Canciones Personalizadas</PageTitle>
+
+<div class="container my-5">
+    <h1 class="mb-4 text-center">Galería de Canciones</h1>
+    
+    <p class="lead text-center mb-5">
+        Explora ejemplos de canciones personalizadas creadas por nuestro equipo. 
+        Puedes filtrar por género musical u ocasión para encontrar referencias para tu propia canción.
+    </p>
+    
+    <div class="row mb-4">
+        <div class="col-md-6 offset-md-3">
+            <div class="input-group">
+                <select class="form-select" @bind="selectedGenreId">
+                    <option value="0">Todos los géneros</option>
+                    @if (genres != null)
+                    {
+                        @foreach (var genre in genres)
+                        {
+                            <option value="@genre.Id">@genre.Name</option>
+                        }
+                    }
+                </select>
+                <select class="form-select" @bind="selectedOccasion">
+                    <option value="null">Todas las ocasiones</option>
+                    @foreach (var occasion in Enum.GetValues<SongOccasion>())
+                    {
+                        <option value="@occasion">@GetOccasionName(occasion)</option>
+                    }
+                </select>
+                <button class="btn btn-primary" @onclick="ApplyFilters">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Example songs - in a real app these would be loaded from the database -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <img src="/images/samples/sample1.jpg" class="card-img-top" alt="Canción de Ejemplo" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">Nuestro Amanecer</h5>
+                    <p class="card-text">Balada romántica creada para un aniversario de bodas de plata.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">Balada</span>
+                        <span class="badge bg-info">Aniversario</span>
+                    </div>
+                    <div class="text-center">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/samples/sample1.mp3" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <img src="/images/samples/sample2.jpg" class="card-img-top" alt="Canción de Ejemplo" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">Celebrando Tu Día</h5>
+                    <p class="card-text">Canción pop alegre creada para un cumpleaños especial.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">Pop</span>
+                        <span class="badge bg-info">Cumpleaños</span>
+                    </div>
+                    <div class="text-center">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/samples/sample2.mp3" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <img src="/images/samples/sample3.jpg" class="card-img-top" alt="Canción de Ejemplo" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">Unidos por Siempre</h5>
+                    <p class="card-text">Rock suave con mensaje de amistad duradera.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">Rock</span>
+                        <span class="badge bg-info">Amistad</span>
+                    </div>
+                    <div class="text-center">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/samples/sample3.mp3" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <img src="/images/samples/sample4.jpg" class="card-img-top" alt="Canción de Ejemplo" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">Mi Pequeño Milagro</h5>
+                    <p class="card-text">Balada emotiva dedicada a un recién nacido.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">Balada</span>
+                        <span class="badge bg-info">Nuevo Bebé</span>
+                    </div>
+                    <div class="text-center">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/samples/sample4.mp3" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <img src="/images/samples/sample5.jpg" class="card-img-top" alt="Canción de Ejemplo" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">Juntos en el Altar</h5>
+                    <p class="card-text">Canción romántica para una ceremonia de boda.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">Pop</span>
+                        <span class="badge bg-info">Boda</span>
+                    </div>
+                    <div class="text-center">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/samples/sample5.mp3" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <img src="/images/samples/sample6.jpg" class="card-img-top" alt="Canción de Ejemplo" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">Empresa en Movimiento</h5>
+                    <p class="card-text">Tema corporativo motivador para evento empresarial.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">Rock</span>
+                        <span class="badge bg-info">Corporativo</span>
+                    </div>
+                    <div class="text-center">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/samples/sample6.mp3" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-5">
+        <a href="/song-generator" class="btn btn-primary btn-lg">Crear Mi Canción</a>
+    </div>
+</div>
+
+@code {
+    private List<Genre>? genres;
+    private int selectedGenreId;
+    private SongOccasion? selectedOccasion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load all available genres
+        genres = await SongGeneratorService.GetGenresAsync();
+    }
+
+    private void ApplyFilters()
+    {
+        // In a real app, this would filter the songs based on the selected genre and occasion
+        // For now, we'll just leave it as is since we have static sample data
+    }
+
+    private string GetOccasionName(SongOccasion occasion) => occasion switch
+    {
+        SongOccasion.Birthday => "Cumpleaños",
+        SongOccasion.Anniversary => "Aniversario",
+        SongOccasion.Wedding => "Boda",
+        SongOccasion.Proposal => "Propuesta",
+        SongOccasion.Friendship => "Amistad",
+        SongOccasion.FamilyCelebration => "Celebración Familiar",
+        SongOccasion.Graduation => "Graduación",
+        SongOccasion.NewBaby => "Nuevo Bebé",
+        SongOccasion.Memorial => "Memorial",
+        SongOccasion.Holiday => "Festividad",
+        SongOccasion.Corporate => "Corporativo",
+        SongOccasion.Other => "Otra Ocasión",
+        _ => occasion.ToString()
+    };
+}

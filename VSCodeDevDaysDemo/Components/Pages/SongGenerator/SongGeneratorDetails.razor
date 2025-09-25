@@ -1,0 +1,251 @@
+@page "/song-generator/details"
+@using VSCodeDevDaysDemo.Models
+@using VSCodeDevDaysDemo.Services
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@inject ISongGeneratorService SongGeneratorService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Crear Canción - Paso 4: Cuéntanos tu Historia</PageTitle>
+
+<div class="container my-4">
+    <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">Paso 4 de 5</div>
+    </div>
+
+    <h1 class="mb-4">Cuéntanos tu Historia</h1>
+    
+    <p class="lead mb-4">Comparte los detalles que te gustaría incluir en tu canción personalizada. Mientras más información nos des, más significativa será tu canción.</p>
+
+    <EditForm Model="@songRequest" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Título de la Canción</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="songTitle" class="form-label">¿Cómo te gustaría titular tu canción? (opcional)</label>
+                    <InputText id="songTitle" class="form-control" @bind-Value="songRequest.Title" placeholder="Deja en blanco para que nosotros lo propongamos" />
+                    <div class="form-text">Puedes dejar este campo en blanco y nuestro equipo creativo propondrá un título basado en tu historia.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Historia y Contexto</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="storyDetails" class="form-label">Cuéntanos la historia que quieres plasmar en la canción *</label>
+                    <InputTextArea id="storyDetails" class="form-control" @bind-Value="songRequest.StoryDetails" rows="6" 
+                                placeholder="Comparte los detalles importantes: cómo se conocieron, momentos significativos, anécdotas especiales, sentimientos que quieres expresar..." />
+                    <ValidationMessage For="@(() => songRequest.StoryDetails)" class="text-danger" />
+                    <div class="form-text">Esta es la información más importante para crear tu canción personalizada. Incluye todos los detalles que consideres relevantes.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Elementos Clave</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Palabras o frases clave que deseas incluir (opcional)</label>
+                    <div class="d-flex mb-2">
+                        <input type="text" class="form-control me-2" @bind="newKeyPhrase" placeholder="Agregar palabra o frase" />
+                        <button type="button" class="btn btn-outline-primary" @onclick="AddKeyPhrase">Agregar</button>
+                    </div>
+                    
+                    @if (songRequest.KeyPhrases.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            @foreach (var phrase in songRequest.KeyPhrases)
+                            {
+                                <div class="badge bg-light text-dark p-2 d-flex align-items-center">
+                                    @phrase
+                                    <button type="button" class="btn-close ms-2" @onclick="() => RemoveKeyPhrase(phrase)"></button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <div class="form-text">Palabras o frases específicas que te gustaría que aparezcan en la letra.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Referencias personales importantes (opcional)</label>
+                    <div class="d-flex mb-2">
+                        <input type="text" class="form-control me-2" @bind="newReference" placeholder="Agregar nombre, fecha o lugar" />
+                        <button type="button" class="btn btn-outline-primary" @onclick="AddReference">Agregar</button>
+                    </div>
+                    
+                    @if (songRequest.PersonalReferences.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            @foreach (var reference in songRequest.PersonalReferences)
+                            {
+                                <div class="badge bg-light text-dark p-2 d-flex align-items-center">
+                                    @reference
+                                    <button type="button" class="btn-close ms-2" @onclick="() => RemoveReference(reference)"></button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <div class="form-text">Nombres de personas, fechas significativas o lugares especiales que deben mencionarse.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Instrumentos destacados (opcional)</label>
+                    <div class="d-flex mb-2">
+                        <input type="text" class="form-control me-2" @bind="newInstrument" placeholder="Agregar instrumento" />
+                        <button type="button" class="btn btn-outline-primary" @onclick="AddInstrument">Agregar</button>
+                    </div>
+                    
+                    @if (songRequest.FeaturedInstruments.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            @foreach (var instrument in songRequest.FeaturedInstruments)
+                            {
+                                <div class="badge bg-light text-dark p-2 d-flex align-items-center">
+                                    @instrument
+                                    <button type="button" class="btn-close ms-2" @onclick="() => RemoveInstrument(instrument)"></button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <div class="form-text">¿Hay algún instrumento que te gustaría destacar en la canción?</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">
+                <i class="bi bi-arrow-left"></i> Atrás
+            </button>
+            <button type="submit" class="btn btn-primary">
+                Continuar <i class="bi bi-arrow-right"></i>
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public SongOccasion? Occasion { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? GenreId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public SongTone? Tone { get; set; }
+
+    private SongRequest songRequest = new SongRequest();
+    private Genre? selectedGenre;
+    private string newKeyPhrase = string.Empty;
+    private string newReference = string.Empty;
+    private string newInstrument = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verify that we have required parameters, if not redirect back
+        if (Occasion == null || GenreId == null || Tone == null)
+        {
+            NavigationManager.NavigateTo("/song-generator");
+            return;
+        }
+
+        try 
+        {
+            // Get the selected genre details
+            selectedGenre = await SongGeneratorService.GetGenreByIdAsync(GenreId.Value);
+            
+            // Initialize the song request with the parameters
+            songRequest.GenreId = GenreId.Value;
+            songRequest.Occasion = Occasion.Value;
+            songRequest.Tone = Tone.Value;
+            
+            // Add default instruments from the genre if available
+            if (selectedGenre?.CommonInstruments != null && selectedGenre.CommonInstruments.Any())
+            {
+                songRequest.FeaturedInstruments = new List<string>(selectedGenre.CommonInstruments.Take(2));
+            }
+        }
+        catch
+        {
+            // If genre not found, go back to genre selection
+            NavigationManager.NavigateTo($"/song-generator/genre?occasion={Occasion}");
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo($"/song-generator/tone?occasion={Occasion}&genreId={GenreId}");
+    }
+
+    private void AddKeyPhrase()
+    {
+        if (!string.IsNullOrWhiteSpace(newKeyPhrase) && !songRequest.KeyPhrases.Contains(newKeyPhrase))
+        {
+            songRequest.KeyPhrases.Add(newKeyPhrase);
+            newKeyPhrase = string.Empty;
+        }
+    }
+
+    private void RemoveKeyPhrase(string phrase)
+    {
+        songRequest.KeyPhrases.Remove(phrase);
+    }
+
+    private void AddReference()
+    {
+        if (!string.IsNullOrWhiteSpace(newReference) && !songRequest.PersonalReferences.Contains(newReference))
+        {
+            songRequest.PersonalReferences.Add(newReference);
+            newReference = string.Empty;
+        }
+    }
+
+    private void RemoveReference(string reference)
+    {
+        songRequest.PersonalReferences.Remove(reference);
+    }
+
+    private void AddInstrument()
+    {
+        if (!string.IsNullOrWhiteSpace(newInstrument) && !songRequest.FeaturedInstruments.Contains(newInstrument))
+        {
+            songRequest.FeaturedInstruments.Add(newInstrument);
+            newInstrument = string.Empty;
+        }
+    }
+
+    private void RemoveInstrument(string instrument)
+    {
+        songRequest.FeaturedInstruments.Remove(instrument);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(songRequest.StoryDetails))
+        {
+            // Validation would handle this, but just in case
+            return;
+        }
+
+        // In a real app, we would save the request to the database here
+        // For now, we'll just navigate to the next step with the data in query parameters
+        
+        // We'll simulate creating the request with the service
+        await SongGeneratorService.CreateSongRequestAsync(songRequest);
+        
+        // Navigate to the final step (packages & payment)
+        NavigationManager.NavigateTo($"/song-generator/package?requestId={songRequest.Id}");
+    }
+}

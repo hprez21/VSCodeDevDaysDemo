@@ -1,0 +1,110 @@
+@page "/song-generator/genre"
+@using VSCodeDevDaysDemo.Models
+@using VSCodeDevDaysDemo.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject ISongGeneratorService SongGeneratorService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Crear Canción - Paso 2: Elige un Género Musical</PageTitle>
+
+<div class="container my-4">
+    <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">Paso 2 de 5</div>
+    </div>
+
+    <h1 class="mb-4">¿Qué género musical prefieres?</h1>
+    
+    <p class="lead mb-4">Selecciona el estilo musical que mejor se adapte a tu personalidad y a la ocasión. Puedes escuchar ejemplos de cada género para ayudarte a decidir.</p>
+
+    @if (genres == null)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p>Cargando géneros musicales...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var genre in genres)
+            {
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100 @(selectedGenreId == genre.Id ? "border-primary" : "")" 
+                         @onclick="() => SelectGenre(genre.Id)"
+                         style="cursor: pointer;">
+                        <img src="@(string.IsNullOrEmpty(genre.ImageUrl) ? "/images/genres/default.jpg" : genre.ImageUrl)" 
+                             class="card-img-top" alt="@genre.Name" style="height: 160px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">@genre.Name</h5>
+                            <p class="card-text">@genre.Description</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary" @onclick:stopPropagation="true">
+                                    <i class="bi bi-play-circle"></i> Escuchar ejemplo
+                                </button>
+                                @if (selectedGenreId == genre.Id)
+                                {
+                                    <i class="bi bi-check-circle-fill text-primary fs-4"></i>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">Instrumentos: @string.Join(", ", genre.CommonInstruments.Take(3))</small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Atrás
+        </button>
+        <button class="btn btn-primary @(selectedGenreId == null ? "disabled" : "")" @onclick="ContinueToNextStep">
+            Continuar <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public SongOccasion? Occasion { get; set; }
+
+    private List<Genre>? genres;
+    private int? selectedGenreId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verify that we have an occasion selected, if not redirect back to step 1
+        if (Occasion == null)
+        {
+            NavigationManager.NavigateTo("/song-generator");
+            return;
+        }
+
+        // Load all available genres
+        genres = await SongGeneratorService.GetGenresAsync();
+    }
+
+    private void SelectGenre(int genreId)
+    {
+        selectedGenreId = genreId;
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/song-generator");
+    }
+
+    private void ContinueToNextStep()
+    {
+        if (selectedGenreId != null)
+        {
+            // Navigate to the next step with both parameters
+            NavigationManager.NavigateTo($"/song-generator/tone?occasion={Occasion}&genreId={selectedGenreId}");
+        }
+    }
+}
