@@ -1,10 +1,14 @@
 using VSCodeDevDaysDemo.Components;
+using VSCodeDevDaysDemo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register custom services
+builder.Services.AddScoped<IAudioPreviewService, AudioPreviewService>();
 
 var app = builder.Build();
 
