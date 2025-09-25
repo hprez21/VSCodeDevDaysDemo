@@ -1,0 +1,288 @@
+@page "/song-generator"
+@using VSCodeDevDaysDemo.Models
+@using VSCodeDevDaysDemo.Services
+@inject IAudioPreviewService AudioPreviewService
+
+<PageTitle>Generador de Canciones Personalizadas</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-4">🎵 Crea tu Canción Personalizada</h1>
+            
+            @if (currentStep == 1)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Paso 1: Selecciona el género musical</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach (var genre in availableGenres)
+                            {
+                                <div class="col-md-4">
+                                    <div class="card h-100 genre-card @(selectedGenre?.Id == genre.Id ? "selected" : "")" 
+                                         @onclick="() => SelectGenre(genre)">
+                                        <div class="card-body text-center">
+                                            <i class="@genre.IconClass fa-2x mb-2"></i>
+                                            <h6>@genre.Name</h6>
+                                            <small class="text-muted">@genre.Description</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary @(selectedGenre == null ? "disabled" : "")" 
+                                    @onclick="NextStep" 
+                                    disabled="@(selectedGenre == null)">
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (currentStep == 2)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Paso 2: Selecciona el tono emocional</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach (var tone in availableTones)
+                            {
+                                <div class="col-md-4">
+                                    <div class="card h-100 tone-card @(selectedTone?.Id == tone.Id ? "selected" : "")" 
+                                         @onclick="() => SelectTone(tone)">
+                                        <div class="card-body text-center">
+                                            <div class="tone-color @tone.ColorClass mb-2"></div>
+                                            <h6>@tone.Name</h6>
+                                            <small class="text-muted">@tone.Description</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-secondary me-2" @onclick="PreviousStep">Atrás</button>
+                            <button class="btn btn-primary @(selectedTone == null ? "disabled" : "")" 
+                                    @onclick="NextStep" 
+                                    disabled="@(selectedTone == null)">
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (currentStep == 3)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Paso 3: Cuéntanos tu historia</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Ocasión especial</label>
+                            <select class="form-select" @bind="songRequest.Occasion">
+                                <option value="">Selecciona una ocasión</option>
+                                <option value="Aniversario">Aniversario</option>
+                                <option value="Cumpleaños">Cumpleaños</option>
+                                <option value="Boda">Boda</option>
+                                <option value="Graduación">Graduación</option>
+                                <option value="Día de la Madre">Día de la Madre</option>
+                                <option value="Día del Padre">Día del Padre</option>
+                                <option value="San Valentín">San Valentín</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nombres especiales a incluir</label>
+                            <input type="text" class="form-control" @bind="songRequest.SpecialNames" 
+                                   placeholder="María, Juan, mamá, etc.">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Cuéntanos tu historia</label>
+                            <textarea class="form-control" rows="4" @bind="songRequest.PersonalStory" 
+                                      placeholder="Describe la historia, los momentos especiales, sentimientos que quieres expresar..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Palabras clave importantes</label>
+                            <input type="text" class="form-control" @bind="songRequest.Keywords" 
+                                   placeholder="amor, felicidad, recuerdos, etc.">
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button class="btn btn-secondary me-2" @onclick="PreviousStep">Atrás</button>
+                            <button class="btn btn-success" @onclick="GeneratePreview">
+                                <i class="bi bi-play-circle me-1"></i>
+                                Generar Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <div class="col-md-4">
+            @if (currentStep >= 1)
+            {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6>Resumen de tu canción</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (selectedGenre != null)
+                        {
+                            <p><strong>Género:</strong> @selectedGenre.Name</p>
+                        }
+                        @if (selectedTone != null)
+                        {
+                            <p><strong>Tono:</strong> @selectedTone.Name</p>
+                        }
+                        @if (!string.IsNullOrEmpty(songRequest.Occasion))
+                        {
+                            <p><strong>Ocasión:</strong> @songRequest.Occasion</p>
+                        }
+                        @if (!string.IsNullOrEmpty(songRequest.SpecialNames))
+                        {
+                            <p><strong>Nombres:</strong> @songRequest.SpecialNames</p>
+                        }
+                    </div>
+                </div>
+            }
+            
+            @if (isGeneratingPreview || currentPreview != null)
+            {
+                <AudioPlayer Preview="currentPreview" 
+                           IsLoading="isGeneratingPreview"
+                           OnRegenerateRequest="RegeneratePreview"
+                           OnPreviewApproved="ApprovePreview" />
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int currentStep = 1;
+    private SongRequest songRequest = new() { Id = Random.Shared.Next(1000, 9999) };
+    private Genre? selectedGenre;
+    private EmotionalTone? selectedTone;
+    private AudioPreview? currentPreview;
+    private bool isGeneratingPreview = false;
+
+    private List<Genre> availableGenres = new()
+    {
+        new() { Id = 1, Name = "Pop", Description = "Melódico y moderno", IconClass = "bi bi-music-note" },
+        new() { Id = 2, Name = "Rock", Description = "Energético y poderoso", IconClass = "bi bi-lightning" },
+        new() { Id = 3, Name = "Balada", Description = "Romántico y emocional", IconClass = "bi bi-heart" },
+        new() { Id = 4, Name = "Jazz", Description = "Sofisticado y elegante", IconClass = "bi bi-disc" },
+        new() { Id = 5, Name = "Reggaeton", Description = "Rítmico y urbano", IconClass = "bi bi-boombox" },
+        new() { Id = 6, Name = "Folk", Description = "Acústico y tradicional", IconClass = "bi bi-tree" }
+    };
+
+    private List<EmotionalTone> availableTones = new()
+    {
+        new() { Id = 1, Name = "Romántico", Description = "Para expresar amor", ColorClass = "tone-romantic" },
+        new() { Id = 2, Name = "Alegre", Description = "Para celebrar", ColorClass = "tone-happy" },
+        new() { Id = 3, Name = "Nostálgico", Description = "Para recordar", ColorClass = "tone-nostalgic" },
+        new() { Id = 4, Name = "Inspirador", Description = "Para motivar", ColorClass = "tone-inspiring" },
+        new() { Id = 5, Name = "Tranquilo", Description = "Para relajar", ColorClass = "tone-peaceful" },
+        new() { Id = 6, Name = "Emotivo", Description = "Para conmover", ColorClass = "tone-emotional" }
+    };
+
+    private void SelectGenre(Genre genre)
+    {
+        selectedGenre = genre;
+        songRequest.Genre = genre;
+    }
+
+    private void SelectTone(EmotionalTone tone)
+    {
+        selectedTone = tone;
+        songRequest.Tone = tone;
+    }
+
+    private void NextStep()
+    {
+        currentStep++;
+    }
+
+    private void PreviousStep()
+    {
+        currentStep--;
+    }
+
+    private async Task GeneratePreview()
+    {
+        if (selectedGenre == null || selectedTone == null) return;
+
+        isGeneratingPreview = true;
+        currentPreview = null;
+        StateHasChanged();
+
+        try
+        {
+            currentPreview = await AudioPreviewService.GeneratePreviewAsync(songRequest);
+            songRequest.Status = SongRequestStatus.PreviewGenerated;
+            songRequest.PreviewAudioUrl = currentPreview.AudioUrl;
+        }
+        catch (Exception ex)
+        {
+            // Manejar error
+            Console.WriteLine($"Error generating preview: {ex.Message}");
+        }
+        finally
+        {
+            isGeneratingPreview = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RegeneratePreview()
+    {
+        await GeneratePreview();
+    }
+
+    private async Task ApprovePreview()
+    {
+        songRequest.Status = SongRequestStatus.PaymentPending;
+        // Aquí redirigiríamos a la página de selección de paquetes
+        await Task.CompletedTask;
+    }
+}
+
+<style>
+    .genre-card, .tone-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .genre-card:hover, .tone-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .genre-card.selected, .tone-card.selected {
+        border-color: #0d6efd;
+        background-color: #f8f9ff;
+    }
+
+    .tone-color {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin: 0 auto;
+    }
+
+    .tone-romantic { background: linear-gradient(45deg, #ff6b6b, #feca57); }
+    .tone-happy { background: linear-gradient(45deg, #48cae4, #06ffa5); }
+    .tone-nostalgic { background: linear-gradient(45deg, #c7d2fe, #f3e8ff); }
+    .tone-inspiring { background: linear-gradient(45deg, #ffd93d, #ff8500); }
+    .tone-peaceful { background: linear-gradient(45deg, #a8e6cf, #88d8c0); }
+    .tone-emotional { background: linear-gradient(45deg, #ff8a80, #ff5722); }
+</style>

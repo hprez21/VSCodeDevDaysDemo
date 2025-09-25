@@ -1,0 +1,200 @@
+@using VSCodeDevDaysDemo.Models
+@inject IJSRuntime JSRuntime
+
+<div class="audio-player-container">
+    @if (Preview != null)
+    {
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-music-note-beamed me-2"></i>
+                    Preview de tu canción personalizada
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="audio-controls mb-3">
+                    <audio @ref="audioElement" 
+                           class="w-100" 
+                           controls 
+                           preload="metadata"
+                           @ontimeupdate="OnTimeUpdate"
+                           @onloadedmetadata="OnLoadedMetadata">
+                        <source src="@Preview.AudioUrl" type="audio/mpeg">
+                        Tu navegador no soporta el elemento de audio.
+                    </audio>
+                </div>
+                
+                <div class="audio-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">Duración: @Preview.DurationSeconds segundos</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">Generado: @Preview.CreatedAt.ToString("HH:mm")</small>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Preview.GeneratedLyrics))
+                {
+                    <div class="lyrics-preview mt-3">
+                        <h6>Vista previa de la letra:</h6>
+                        <div class="lyrics-text p-3 bg-light rounded">
+                            @foreach (var line in Preview.GeneratedLyrics.Split('\n'))
+                            {
+                                <div>@line</div>
+                            }
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Esta es solo una muestra. La canción final será completamente personalizada.
+                        </small>
+                    </div>
+                }
+
+                <div class="preview-actions mt-3">
+                    <button class="btn btn-outline-primary btn-sm me-2" @onclick="RegeneratePreview">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        Generar otra variación
+                    </button>
+                    <button class="btn btn-success" @onclick="OnApprovePreview">
+                        <i class="bi bi-check-circle me-1"></i>
+                        ¡Me gusta! Continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else if (IsLoading)
+    {
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Generando preview...</span>
+                </div>
+                <h6>Generando tu preview personalizado...</h6>
+                <p class="text-muted mb-0">
+                    Nuestro sistema de IA está creando una muestra única basada en tus selecciones.
+                    <br>Esto puede tomar entre 5-30 segundos.
+                </p>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" 
+                         style="width: @(LoadingProgress)%">
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public AudioPreview? Preview { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public EventCallback OnRegenerateRequest { get; set; }
+    [Parameter] public EventCallback OnPreviewApproved { get; set; }
+
+    private ElementReference audioElement;
+    private double currentTime = 0;
+    private double duration = 0;
+    private int LoadingProgress = 0;
+    private Timer? progressTimer;
+
+    protected override void OnParametersSet()
+    {
+        if (IsLoading && progressTimer == null)
+        {
+            StartLoadingProgress();
+        }
+        else if (!IsLoading && progressTimer != null)
+        {
+            StopLoadingProgress();
+        }
+    }
+
+    private void StartLoadingProgress()
+    {
+        LoadingProgress = 0;
+        progressTimer = new Timer(UpdateProgress, null, 0, 200);
+    }
+
+    private void StopLoadingProgress()
+    {
+        progressTimer?.Dispose();
+        progressTimer = null;
+        LoadingProgress = 100;
+    }
+
+    private void UpdateProgress(object? state)
+    {
+        if (LoadingProgress < 90)
+        {
+            LoadingProgress += Random.Shared.Next(1, 4);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnTimeUpdate()
+    {
+        if (audioElement.Context != null)
+        {
+            currentTime = await JSRuntime.InvokeAsync<double>("eval", $"document.querySelector('audio').currentTime");
+        }
+    }
+
+    private async Task OnLoadedMetadata()
+    {
+        if (audioElement.Context != null)
+        {
+            duration = await JSRuntime.InvokeAsync<double>("eval", $"document.querySelector('audio').duration");
+        }
+    }
+
+    private async Task RegeneratePreview()
+    {
+        await OnRegenerateRequest.InvokeAsync();
+    }
+
+    private async Task OnApprovePreview()
+    {
+        await OnPreviewApproved.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        progressTimer?.Dispose();
+    }
+}
+
+<style>
+    .audio-player-container {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .audio-controls audio {
+        border-radius: 8px;
+        outline: none;
+    }
+
+    .lyrics-text {
+        font-style: italic;
+        line-height: 1.6;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .preview-actions {
+        border-top: 1px solid #dee2e6;
+        padding-top: 1rem;
+    }
+
+    .progress {
+        background-color: #e9ecef;
+    }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+    }
+</style>
